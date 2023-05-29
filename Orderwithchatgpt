@@ -146,4 +146,45 @@ class Chatbot:
             )
             sess.execute(q)
     
-    
+    /*以下代码只需要执行一次，为建表语句
+    from sqlalchemy import Table, Column, Integer, String, DateTime, Text, MetaData, SmallInteger
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import os
+
+
+db_file = "chatbot.db"
+
+if os.path.exists(db_file):
+    os.remove(db_file)
+
+engine = create_engine(f"sqlite:///{db_file}")
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+metadata_obj = MetaData()
+
+chat_record_table = Table(
+    "chat_record_table",
+    metadata_obj,
+    Column("id", Integer, primary_key=True),
+    Column("user_id", String(64), index=True),
+    Column("session_id", String(64), index=True),
+    Column("user_input", Text),
+    Column("bot_output", Text),
+    Column("chat_at", DateTime),
+)
+
+chat_session_table = Table(
+    "chat_session_table",
+    metadata_obj,
+    Column("id", Integer, primary_key=True),
+    Column("user_id", String(64), index=True),
+    Column("session_id", String(64), index=True),
+    Column("cellphone", String(16)),
+    Column("people_number", SmallInteger),
+    Column("meal_time", String(32)),
+    Column("chat_at", DateTime),
+)
+
+metadata_obj.create_all(engine, checkfirst=True)
+    */
