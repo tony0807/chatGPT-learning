@@ -146,8 +146,8 @@ class Chatbot:
             )
             sess.execute(q)
     
-    /*以下代码只需要执行一次，为建表语句
-    from sqlalchemy import Table, Column, Integer, String, DateTime, Text, MetaData, SmallInteger
+###以下代码只需要执行一次，为建表语句
+from sqlalchemy import Table, Column, Integer, String, DateTime, Text, MetaData, SmallInteger
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
@@ -187,4 +187,4 @@ chat_session_table = Table(
 )
 
 metadata_obj.create_all(engine, checkfirst=True)
-    */
+#####建表语句到这里结束
