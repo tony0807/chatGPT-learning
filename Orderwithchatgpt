@@ -40,6 +40,110 @@ class ChatRecord:
     bot_output: str
     chat_at: datetime
 ##以上使用dataclass这个装饰器分别定义了三个数据类，即User,chatsession和chatrecord,分别用来记录用户信息，聊天信息和聊天记录
+## 定义问答函数，使用chatgpt进行对话
+def ask(msg):
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo", 
+        temperature=0.2,
+        max_tokens=100,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        messages=msg
+    )
+    ans = response.get("choices")[0].get("message").get("content")
+    return ans
 
+from sqlalchemy import insert
+
+class Chatbot:
+    
+    def __init__(self):
+        self.system_inp = """现在你是一个订餐机器人（角色是assistant），你的目的是向用户获取手机号码、用餐人数量和用餐时间三个信息。你可以自由回复用户消息，但牢记你的目的。每一轮你需要输出给用户的回复，以及获取到的信息，信息应该以JSON方式存储，包括三个key：cellphone表示手机号码，people_number表示用餐人数，meal_time表示用餐时间储。
+
+回复格式：
+给用户的回复：{回复给用户的话}
+获取到的信息：{"cellphone": null, "people_number": null, "meal_time": null}
+"""
+        self.max_round = 10
+        self.slot_labels = ["meal_time", "people_number", "cellphone"]
+        self.reg_msg = re.compile(r"\n+")
+
+
+    def check_over(self, slot_dict: dict):
+        for label in self.slot_labels:
+            if slot_dict.get(label) is None:
+                return False
+        return True
+    
+    def send_msg(self, msg: str):
+        print(f"机器人：{msg}")
+    
+    def chat(self, user_id: str):
+        sess_id = uuid.uuid4().hex
+        chat_at = datetime.now()
+        msg = [
+            {"role": "system", "content": self.system_inp},
+        ]
+        n_round = 0
+        
+        history = []
+        while True:
+            if n_round > self.max_round:
+                bot_msg = "非常感谢您对我们的支持，再见。"
+                self.send_msg(bot_msg)
+                break
+            
+            try:
+                bot_inp = ask(msg)
+            except Exception as e:
+                bot_msg = "机器人出错，稍后将由人工与您联系，谢谢。"
+                self.send_msg(bot_msg)
+                break
+            
+            tmp = self.reg_msg.split(bot_inp)
+            bot_msg = tmp[0].strip("给用户的回复：")
+            self.send_msg(bot_msg)
+            if len(tmp) > 1:
+                slot_str = tmp[1].strip("获取到的信息：")
+                slot = json.loads(slot_str)
+                print(f"\tslot: {slot}")
+            n_round += 1
+            
+            if self.check_over(slot):
+                break
+
+            user_inp = input()
+            
+            msg += [
+                {"role": "assistant", "content": bot_inp},
+                {"role": "user", "content": user_inp},
+            ]
+            
+            record = ChatRecord(user_id, sess_id, bot_inp, user_inp, datetime.now())
+            history.append(record)
+            
+            if check_risk(user_inp):
+                break
+        
+        chat_sess = ChatSession(user_id, sess_id, **slot, chat_at=chat_at)
+        self.store(history, chat_sess)
+    
+    
+    def store(self, history: List[ChatRecord], chat: ChatSession):
+        with SessionLocal.begin() as sess:
+            q = insert(
+                chat_record_table
+            ).values(
+                [asdict(v) for v in history]
+            )
+            sess.execute(q)
+        with SessionLocal.begin() as sess:
+            q = insert(
+                chat_session_table
+            ).values(
+                [asdict(chat)]
+            )
+            sess.execute(q)
     
     
