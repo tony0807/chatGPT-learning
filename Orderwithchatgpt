@@ -188,3 +188,17 @@ chat_session_table = Table(
 
 metadata_obj.create_all(engine, checkfirst=True)
 #####建表语句到这里结束
+
+import pnlp
+nick = "长琴"
+user = User(pnlp.generate_uuid(nick), nick)
+chatbot = Chatbot()
+chatbot.chat(user.user_id)
+##测试订餐书否能成功
+
+def query_table(table: str):
+    con = sqlite3.connect("chatbot.db")
+    cur = con.cursor()
+    q = cur.execute(f"SELECT * FROM {table}")
+    return q.fetchall()
+## 支持查询表的数据
