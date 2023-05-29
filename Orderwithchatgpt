@@ -1,2 +1,45 @@
 ## 这是一个任务机器人，主要目的是接收用户的输入，执行订餐任务，订餐的信息主要包括订餐联系人电话，人数和预定时间； 为便于查询，增加了数据库进行保存； 
 ## 同时为了规避风险和验证用户身份，进行了风险次查询
+import requests
+
+## 风险查询函数
+def check_risk(inp: str) -> bool:
+    safe_api = "https://api.openai.com/v1/moderations"
+    resp = requests.post(safe_api, json={"input": inp}, headers={"Authorization": f"Bearer {OPENAI_API_KEY}"})
+    data = resp.json()
+    return data["results"][0]["flagged"]
+    
+from dataclasses import dataclass, asdict
+from typing import List, Dict
+from datetime import datetime
+import uuid
+import json
+import re
+@dataclass
+class User:
+    
+    user_id: str
+    user_name: str
+    
+@dataclass
+class ChatSession:
+    
+    user_id: str
+    session_id: str
+    cellphone: str
+    people_number: int
+    meal_time: str
+    chat_at: datetime
+
+@dataclass
+class ChatRecord:
+    
+    user_id: str
+    session_id: str
+    user_input: str
+    bot_output: str
+    chat_at: datetime
+##以上使用dataclass这个装饰器分别定义了三个数据类，即User,chatsession和chatrecord,分别用来记录用户信息，聊天信息和聊天记录
+
+    
+    
